@@ -181,6 +181,12 @@ export default function AdminPage() {
     const [showNewCategory, setShowNewCategory] = useState(false);
     const [newTag, setNewTag] = useState("");
     const [showNewTag, setShowNewTag] = useState(false);
+    const [localMsg, setLocalMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+    const showLocalMsg = (type: "success" | "error", text: string) => {
+      setLocalMsg({ type, text });
+      setTimeout(() => setLocalMsg(null), 3000);
+    };
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: "cover" | "content") => {
       const file = e.target.files?.[0];
@@ -190,9 +196,9 @@ export default function AdminPage() {
       if (url) {
         if (target === "cover") setForm({ ...form, cover: url });
         else setForm({ ...form, content: form.content + `\n![${file.name}](${url})\n` });
-        showMessage("success", "图片上传成功！");
+        showLocalMsg("success", "图片上传成功！");
       } else {
-        showMessage("error", "图片上传失败");
+        showLocalMsg("error", "图片上传失败");
       }
       setUploading(false);
     };
@@ -206,7 +212,7 @@ export default function AdminPage() {
     };
 
     const addNewCategory = () => {
-      if (newCategory.trim() && !allCategories.some((c) => c.name === newCategory.trim())) {
+      if (newCategory.trim()) {
         setForm({ ...form, category: newCategory.trim() });
         setNewCategory("");
         setShowNewCategory(false);
@@ -254,6 +260,12 @@ export default function AdminPage() {
           </h2>
           <button onClick={onCancel} className="text-bark-400 hover:text-bark-600 transition-colors">取消</button>
         </div>
+
+        {localMsg && (
+          <div className={`px-4 py-2.5 rounded-warm-lg text-sm font-medium ${localMsg.type === "success" ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"}`}>
+            {localMsg.text}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -387,6 +399,8 @@ export default function AdminPage() {
     const [slug, setSlug] = useState(album?.slug || "");
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [localMsg, setLocalMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+    const showLocalMsg = (type: "success" | "error", text: string) => { setLocalMsg({ type, text }); setTimeout(() => setLocalMsg(null), 3000); };
 
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files; if (!files) return;
@@ -395,7 +409,7 @@ export default function AdminPage() {
         const url = await uploadImage(files[i], `albums/${slug || "new"}`);
         if (url) setForm((prev) => ({ ...prev, photos: [...prev.photos, { src: url, caption: files[i].name.replace(/\.[^.]+$/, "") }] }));
       }
-      setUploading(false); showMessage("success", "照片上传成功！");
+      setUploading(false); showLocalMsg("success", "照片上传成功！");
     };
 
     const handleSave = async () => {
@@ -416,6 +430,9 @@ export default function AdminPage() {
           <h2 className="font-serif text-2xl font-bold text-bark-700 dark:text-warm-100">{album ? "✏️ 编辑相册" : "📷 创建新相册"}</h2>
           <button onClick={onCancel} className="text-bark-400 hover:text-bark-600 transition-colors">取消</button>
         </div>
+        {localMsg && (
+          <div className={`px-4 py-2.5 rounded-warm-lg text-sm font-medium ${localMsg.type === "success" ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"}`}>{localMsg.text}</div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div><label className="block text-sm font-medium text-bark-600 dark:text-bark-200 mb-1">相册名称</label>
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 bg-white dark:bg-bark-800 border border-warm-200 dark:border-bark-600 rounded-lg text-bark-700 dark:text-warm-100 focus:outline-none focus:ring-2 focus:ring-accent-400" placeholder="如：春日随拍" /></div>
