@@ -11,6 +11,14 @@
     "summary": "每一段旅程都始于第一步，这是我在这个小站写下的第一篇文章。"
   },
   {
+    "slug": "post-20260414",
+    "title": "我愿所有的好，都陪着你",
+    "date": "2026-04-14",
+    "category": "随笔",
+    "tags": [],
+    "summary": "我愿所有的好都陪着你"
+  },
+  {
     "slug": "build-blog-with-nextjs",
     "title": "用 Next.js 搭建个人博客",
     "date": "2026-04-13",
