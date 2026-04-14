@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   trailingSlash: true,
+  async redirects() {
+    return [];
+  },
 };
 
 export default nextConfig;

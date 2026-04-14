@@ -72,7 +72,7 @@ export default function AdminPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ success: false, message: "服务器响应异常，请刷新页面重试" }));
       if (data.success) {
         sessionStorage.setItem("admin_session", data.sessionToken);
         sessionStorage.setItem("github_token", data.githubToken);
