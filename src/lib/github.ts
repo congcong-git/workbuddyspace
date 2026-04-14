@@ -91,7 +91,7 @@ export async function getDirectoryList(path: string): Promise<{ name: string; pa
     }));
 }
 
-// 创建或更新文件
+// 创建或更新文件（更新时自动获取最新 sha）
 export async function saveFile(
   path: string,
   content: string,
@@ -107,7 +107,15 @@ export async function saveFile(
     branch: config.branch,
   };
 
-  if (sha) body.sha = sha;
+  // 如果是更新操作（提供了 sha），先获取最新 sha 防止因 force push 导致 sha 失效
+  if (sha) {
+    const latest = await getFileContent(path);
+    if (latest) {
+      body.sha = latest.sha;
+    } else {
+      body.sha = sha; // 文件不存在时用传入的 sha（可能文件已被删除，用旧 sha 会创建新文件）
+    }
+  }
 
   const res = await fetch(
     `${GITHUB_API}/repos/${config.owner}/${config.repo}/contents/${path}`,
@@ -121,17 +129,21 @@ export async function saveFile(
   return res.ok;
 }
 
-// 删除文件
-export async function deleteFile(path: string, message: string, sha: string): Promise<boolean> {
+// 删除文件（先获取最新 sha）
+export async function deleteFile(path: string, message: string, _sha?: string): Promise<boolean> {
   const config = getConfig();
   if (!config.token) return false;
+
+  // 先获取最新 sha（因为 force push 可能导致旧 sha 失效）
+  const latest = await getFileContent(path);
+  if (!latest) return false; // 文件不存在，可能已被删除
 
   const res = await fetch(
     `${GITHUB_API}/repos/${config.owner}/${config.repo}/contents/${path}`,
     {
       method: "DELETE",
       headers: headers(config.token),
-      body: JSON.stringify({ message, sha, branch: config.branch }),
+      body: JSON.stringify({ message, sha: latest.sha, branch: config.branch }),
     }
   );
 
