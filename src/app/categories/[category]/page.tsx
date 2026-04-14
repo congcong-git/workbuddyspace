@@ -3,6 +3,8 @@ import PostList from "@/components/blog/PostList";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
   const categories = getAllCategories();
   return categories.map((cat) => ({ category: cat.name }));

@@ -7,6 +7,8 @@ import ReadingProgress from "@/components/ui/ReadingProgress";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
   const posts = getAllPosts();
   return posts.map((post) => ({ slug: post.slug }));
