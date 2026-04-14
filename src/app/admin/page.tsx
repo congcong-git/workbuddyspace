@@ -163,6 +163,52 @@ export default function AdminPage() {
     if (authenticated) loadData();
   }, [authenticated, loadData]);
 
+  // ========== 中文标题转 Slug 的映射 ==========
+  const slugMap: Record<string, string> = {
+    "技术": "tech", "随笔": "essay", "阅读": "reading", "摄影": "photography", "生活": "life",
+    "旅行": "travel", "美食": "food", "设计": "design", "音乐": "music", "电影": "movie",
+    "编程": "coding", "前端": "frontend", "后端": "backend", "教程": "tutorial",
+    "笔记": "notes", "心得": "insights", "分享": "share", "入门": "getting-started",
+    "指南": "guide", "实战": "practice", "优化": "optimization", "思考": "thoughts",
+    "搭建": "build", "配置": "setup", "基础": "basics",
+    "高级": "advanced", "工具": "tools", "资源": "resources", "推荐": "recommend",
+    "总结": "summary", "回顾": "review", "规划": "plan", "目标": "goals",
+    "春日": "spring", "夏日": "summer", "秋日": "autumn", "冬日": "winter",
+    "个人": "personal", "成长": "growth", "感悟": "reflections", "记录": "journal",
+    "城市": "city", "自然": "nature", "建筑": "architecture", "人文": "culture",
+  };
+
+  // 根据 title 自动生成 slug
+  const generateSlug = (title: string): string => {
+    // 尝试中文关键词映射
+    const parts: string[] = [];
+    let remaining = title;
+    let found = true;
+    while (remaining.length > 0 && found) {
+      found = false;
+      for (const [cn, en] of Object.entries(slugMap)) {
+        if (remaining.startsWith(cn)) {
+          parts.push(en);
+          remaining = remaining.slice(cn.length);
+          found = true;
+          break;
+        }
+      }
+    }
+    // 如果映射匹配了大部分内容，用映射结果
+    if (parts.length > 0 && remaining.length < title.length * 0.5) {
+      if (remaining.length > 0) {
+        // 剩余部分转拼音（简单处理：用时间戳后缀）
+        parts.push(Date.now().toString(36).slice(-4));
+      }
+      return parts.join("-");
+    }
+    // 如果没有匹配到中文映射，用时间戳生成
+    const now = new Date();
+    const datePrefix = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+    return `post-${datePrefix}`;
+  };
+
   // ========== 文章编辑器 ==========
   const PostEditor = ({ post, onSave, onCancel }: { post: PostData | null; onSave: () => void; onCancel: () => void }) => {
     const [form, setForm] = useState({
@@ -175,6 +221,7 @@ export default function AdminPage() {
       content: post?.content || "",
     });
     const [slug, setSlug] = useState(post?.slug || "");
+    const [slugManuallyEdited, setSlugManuallyEdited] = useState(!!post);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [newCategory, setNewCategory] = useState("");
@@ -270,13 +317,22 @@ export default function AdminPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-bark-600 dark:text-bark-200 mb-1">文章标题</label>
-            <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+            <input value={form.title} onChange={(e) => {
+              const newTitle = e.target.value;
+              setForm({ ...form, title: newTitle });
+              // 自动生成 slug（仅在未手动修改时）
+              if (!slugManuallyEdited && !post) {
+                setSlug(newTitle ? generateSlug(newTitle) : "");
+              }
+            }}
               className="w-full px-3 py-2 bg-white dark:bg-bark-800 border border-warm-200 dark:border-bark-600 rounded-lg text-bark-700 dark:text-warm-100 focus:outline-none focus:ring-2 focus:ring-accent-400" placeholder="输入文章标题" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-bark-600 dark:text-bark-200 mb-1">URL Slug</label>
-            <input value={slug} onChange={(e) => setSlug(e.target.value.replace(/[^a-z0-9-]/g, ""))}
-              className="w-full px-3 py-2 bg-white dark:bg-bark-800 border border-warm-200 dark:border-bark-600 rounded-lg text-bark-700 dark:text-warm-100 focus:outline-none focus:ring-2 focus:ring-accent-400" placeholder="url-slug" disabled={!!post} />
+            <label className="block text-sm font-medium text-bark-600 dark:text-bark-200 mb-1">
+              URL Slug {!post && <span className="text-xs text-bark-400 font-normal">（根据标题自动生成，可手动修改）</span>}
+            </label>
+            <input value={slug} onChange={(e) => { setSlug(e.target.value.replace(/[^a-z0-9-]/g, "")); setSlugManuallyEdited(true); }}
+              className="w-full px-3 py-2 bg-white dark:bg-bark-800 border border-warm-200 dark:border-bark-600 rounded-lg text-bark-700 dark:text-warm-100 focus:outline-none focus:ring-2 focus:ring-accent-400" placeholder="auto-generated-from-title" disabled={!!post} />
           </div>
           <div>
             <label className="block text-sm font-medium text-bark-600 dark:text-bark-200 mb-1">日期</label>
@@ -396,7 +452,31 @@ export default function AdminPage() {
       date: album?.date || new Date().toISOString().split("T")[0],
       cover: album?.cover || "", photos: album?.photos || [] as { src: string; caption: string }[],
     });
+
+    // 相册名转 slug
+    const generateAlbumSlug = (name: string): string => {
+      const parts: string[] = [];
+      let remaining = name;
+      let found = true;
+      while (remaining.length > 0 && found) {
+        found = false;
+        for (const [cn, en] of Object.entries(slugMap)) {
+          if (remaining.startsWith(cn)) {
+            parts.push(en);
+            remaining = remaining.slice(cn.length);
+            found = true;
+            break;
+          }
+        }
+      }
+      if (parts.length > 0 && remaining.length < name.length * 0.5) {
+        if (remaining.length > 0) parts.push(Date.now().toString(36).slice(-4));
+        return parts.join("-");
+      }
+      return `album-${Date.now().toString(36).slice(-6)}`;
+    };
     const [slug, setSlug] = useState(album?.slug || "");
+    const [slugManuallyEdited, setSlugManuallyEdited] = useState(!!album);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [localMsg, setLocalMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -435,9 +515,17 @@ export default function AdminPage() {
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div><label className="block text-sm font-medium text-bark-600 dark:text-bark-200 mb-1">相册名称</label>
-            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 bg-white dark:bg-bark-800 border border-warm-200 dark:border-bark-600 rounded-lg text-bark-700 dark:text-warm-100 focus:outline-none focus:ring-2 focus:ring-accent-400" placeholder="如：春日随拍" /></div>
-          <div><label className="block text-sm font-medium text-bark-600 dark:text-bark-200 mb-1">URL Slug</label>
-            <input value={slug} onChange={(e) => setSlug(e.target.value.replace(/[^a-z0-9-]/g, ""))} className="w-full px-3 py-2 bg-white dark:bg-bark-800 border border-warm-200 dark:border-bark-600 rounded-lg text-bark-700 dark:text-warm-100 focus:outline-none focus:ring-2 focus:ring-accent-400" placeholder="url-slug" disabled={!!album} /></div>
+            <input value={form.name} onChange={(e) => {
+              const newName = e.target.value;
+              setForm({ ...form, name: newName });
+              if (!slugManuallyEdited && !album) {
+                setSlug(newName ? generateAlbumSlug(newName) : "");
+              }
+            }} className="w-full px-3 py-2 bg-white dark:bg-bark-800 border border-warm-200 dark:border-bark-600 rounded-lg text-bark-700 dark:text-warm-100 focus:outline-none focus:ring-2 focus:ring-accent-400" placeholder="如：春日随拍" /></div>
+          <div>            <label className="block text-sm font-medium text-bark-600 dark:text-bark-200 mb-1">
+              URL Slug {!album && <span className="text-xs text-bark-400 font-normal">（根据名称自动生成，可手动修改）</span>}
+            </label>
+            <input value={slug} onChange={(e) => { setSlug(e.target.value.replace(/[^a-z0-9-]/g, "")); setSlugManuallyEdited(true); }} className="w-full px-3 py-2 bg-white dark:bg-bark-800 border border-warm-200 dark:border-bark-600 rounded-lg text-bark-700 dark:text-warm-100 focus:outline-none focus:ring-2 focus:ring-accent-400" placeholder="auto-generated" disabled={!!album} /></div>
           <div><label className="block text-sm font-medium text-bark-600 dark:text-bark-200 mb-1">描述</label>
             <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-3 py-2 bg-white dark:bg-bark-800 border border-warm-200 dark:border-bark-600 rounded-lg text-bark-700 dark:text-warm-100 focus:outline-none focus:ring-2 focus:ring-accent-400" placeholder="相册描述" /></div>
           <div><label className="block text-sm font-medium text-bark-600 dark:text-bark-200 mb-1">日期</label>
