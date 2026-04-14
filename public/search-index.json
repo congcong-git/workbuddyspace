@@ -32,18 +32,6 @@
     "summary": "从零开始，用 Next.js + Tailwind CSS 搭建一个温暖文艺风格的个人博客，含相册功能。"
   },
   {
-    "slug": "spring-reading-notes",
-    "title": "春日读书笔记",
-    "date": "2026-04-12",
-    "category": "阅读",
-    "tags": [
-      "读书",
-      "感悟",
-      "生活"
-    ],
-    "summary": "春天适合读一些温暖的书，这几本让我感受到了文字的力量。"
-  },
-  {
     "slug": "photography-tips",
     "title": "我的摄影心得",
     "date": "2026-04-11",
@@ -54,17 +42,5 @@
       "生活"
     ],
     "summary": "从手机到相机，记录我对摄影的理解和感悟。"
-  },
-  {
-    "slug": "css-animation-tips",
-    "title": "CSS 动画实用技巧",
-    "date": "2026-04-10",
-    "category": "技术",
-    "tags": [
-      "CSS",
-      "动画",
-      "前端"
-    ],
-    "summary": "一些实用的 CSS 动画技巧，让你的网页更有生命力。"
   }
 ]

@@ -1,10 +1,10 @@
 // 站点配置
 export const siteConfig = {
-  name: "从从的小站",
+  name: "聪聪的小站",
   description: "一个温暖文艺的个人博客，记录生活、技术与思考",
   url: "https://workbuddyspace.vercel.app",
   author: {
-    name: "从从",
+    name: "聪聪",
     avatar: "/images/avatar.jpg",
     bio: "热爱生活，热爱技术，用文字和镜头记录世界",
   },

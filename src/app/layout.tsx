@@ -28,11 +28,11 @@ const notoSerifSC = Noto_Serif_SC({
 
 export const metadata: Metadata = {
   title: {
-    default: "从从的小站",
-    template: "%s | 从从的小站",
+    default: "聪聪的小站",
+    template: "%s | 聪聪的小站",
   },
   description: "一个温暖文艺的个人博客，记录生活、技术与思考",
-  keywords: ["博客", "技术", "生活", "摄影", "从从"],
+  keywords: ["博客", "技术", "生活", "摄影", "聪聪"],
 };
 
 export default function RootLayout({
