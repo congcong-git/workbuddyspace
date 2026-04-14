@@ -229,7 +229,7 @@ export default function AdminPage() {
     };
 
     const handleSave = async () => {
-      if (!form.title || !slug) { showMessage("error", "标题和 slug 不能为空"); return; }
+      if (!form.title || !slug) { showLocalMsg("error", "标题和 slug 不能为空"); return; }
       setSaving(true);
       const frontmatter = {
         title: form.title,
@@ -244,10 +244,10 @@ export default function AdminPage() {
       const sha = existingPost?.sha;
       const success = await saveFile(`content/posts/${slug}.md`, fileContent, `${post ? "更新" : "发布"}文章: ${form.title}`, sha);
       if (success) {
-        showMessage("success", `文章${post ? "更新" : "发布"}成功！网站将自动部署`);
+        showLocalMsg("success", `文章${post ? "更新" : "发布"}成功！网站将自动部署`);
         onSave();
       } else {
-        showMessage("error", "保存失败，请重试");
+        showLocalMsg("error", "保存失败，请重试");
       }
       setSaving(false);
     };
@@ -413,14 +413,14 @@ export default function AdminPage() {
     };
 
     const handleSave = async () => {
-      if (!form.name || !slug) { showMessage("error", "相册名称和 slug 不能为空"); return; }
+      if (!form.name || !slug) { showLocalMsg("error", "相册名称和 slug 不能为空"); return; }
       setSaving(true);
       const albumData = { name: form.name, description: form.description, date: form.date, cover: form.cover || (form.photos.length > 0 ? form.photos[0].src : ""), photos: form.photos };
       const fileContent = yaml.dump(albumData, { lineWidth: -1 });
       const existingAlbum = album ? albums.find((a) => a.slug === slug) : null;
       const success = await saveFile(`content/albums/${slug}.yaml`, fileContent, `${album ? "更新" : "创建"}相册: ${form.name}`, existingAlbum?.sha);
-      if (success) { showMessage("success", `相册${album ? "更新" : "创建"}成功！网站将自动部署`); onSave(); }
-      else { showMessage("error", "保存失败，请重试"); }
+      if (success) { showLocalMsg("success", `相册${album ? "更新" : "创建"}成功！网站将自动部署`); onSave(); }
+      else { showLocalMsg("error", "保存失败，请重试"); }
       setSaving(false);
     };
 
