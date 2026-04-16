@@ -1,9 +1,11 @@
+import { getPostsByTagFromGitHub, getAllTagsFromGitHub } from "@/lib/github-server";
 import { getPostsByTag, getAllTags } from "@/lib/posts";
 import PostList from "@/components/blog/PostList";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 export const dynamicParams = true;
+export const dynamic = "force-dynamic";
 
 export async function generateStaticParams() {
   const tags = getAllTags();
@@ -28,7 +30,13 @@ export default async function TagPage({
 }) {
   const { tag } = await params;
   const decodedTag = decodeURIComponent(tag);
-  const posts = getPostsByTag(decodedTag);
+
+  let posts;
+  try {
+    posts = await getPostsByTagFromGitHub(decodedTag);
+  } catch {
+    posts = getPostsByTag(decodedTag);
+  }
 
   if (posts.length === 0) notFound();
 

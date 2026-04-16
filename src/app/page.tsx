@@ -1,13 +1,27 @@
 import Link from "next/link";
+import { getAllPostsFromGitHub, getAllAlbumsFromGitHub } from "@/lib/github-server";
 import { getAllPosts } from "@/lib/posts";
 import { getAllAlbums } from "@/lib/albums";
 import PostCard from "@/components/blog/PostCard";
 import AlbumCard from "@/components/album/AlbumCard";
 import { siteConfig } from "@/lib/constants";
 
-export default function HomePage() {
-  const posts = getAllPosts().slice(0, 4);
-  const albums = getAllAlbums().slice(0, 3);
+// 首页也动态渲染，确保最新内容可见
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  // 优先从 GitHub 获取，fallback 到本地
+  let posts, albums;
+  try {
+    posts = (await getAllPostsFromGitHub()).slice(0, 4);
+  } catch {
+    posts = getAllPosts().slice(0, 4);
+  }
+  try {
+    albums = (await getAllAlbumsFromGitHub()).slice(0, 3);
+  } catch {
+    albums = getAllAlbums().slice(0, 3);
+  }
 
   return (
     <div className="paper-texture">

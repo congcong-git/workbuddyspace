@@ -77,6 +77,19 @@ export default function AdminPage() {
     setTimeout(() => setMessage(null), 3000);
   }, []);
 
+  // 触发 Vercel 重新部署
+  const triggerRedeploy = useCallback(async () => {
+    try {
+      const token = sessionStorage.getItem("admin_session");
+      await fetch("/api/admin/redeploy", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}` },
+      });
+    } catch {
+      // 静默失败，不影响用户操作
+    }
+  }, []);
+
   const handleLogin = async () => {
     setLoading(true);
     try {
@@ -210,7 +223,7 @@ export default function AdminPage() {
   };
 
   // ========== 文章编辑器 ==========
-  const PostEditor = ({ post, onSave, onCancel }: { post: PostData | null; onSave: () => void; onCancel: () => void }) => {
+  const PostEditor = ({ post, onSave, onCancel, onRedeploy }: { post: PostData | null; onSave: () => void; onCancel: () => void; onRedeploy: () => void }) => {
     const [form, setForm] = useState({
       title: post?.title || "",
       date: post?.date || new Date().toISOString().split("T")[0],
@@ -291,7 +304,8 @@ export default function AdminPage() {
       const sha = existingPost?.sha;
       const success = await saveFile(`content/posts/${slug}.md`, fileContent, `${post ? "更新" : "发布"}文章: ${form.title}`, sha);
       if (success) {
-        showLocalMsg("success", `文章${post ? "更新" : "发布"}成功！网站将自动部署`);
+        showLocalMsg("success", `文章${post ? "更新" : "发布"}成功！内容已即时更新`);
+        onRedeploy();
         onSave();
       } else {
         showLocalMsg("error", "保存失败，请重试");
@@ -446,7 +460,7 @@ export default function AdminPage() {
   };
 
   // ========== 相册编辑器（保持不变，省略大部分） ==========
-  const AlbumEditor = ({ album, onSave, onCancel }: { album: AlbumData | null; onSave: () => void; onCancel: () => void }) => {
+  const AlbumEditor = ({ album, onSave, onCancel, onRedeploy }: { album: AlbumData | null; onSave: () => void; onCancel: () => void; onRedeploy: () => void }) => {
     const [form, setForm] = useState({
       name: album?.name || "", description: album?.description || "",
       date: album?.date || new Date().toISOString().split("T")[0],
@@ -499,7 +513,7 @@ export default function AdminPage() {
       const fileContent = yaml.dump(albumData, { lineWidth: -1 });
       const existingAlbum = album ? albums.find((a) => a.slug === slug) : null;
       const success = await saveFile(`content/albums/${slug}.yaml`, fileContent, `${album ? "更新" : "创建"}相册: ${form.name}`, existingAlbum?.sha);
-      if (success) { showLocalMsg("success", `相册${album ? "更新" : "创建"}成功！网站将自动部署`); onSave(); }
+      if (success) { showLocalMsg("success", `相册${album ? "更新" : "创建"}成功！内容已即时更新`); onRedeploy(); onSave(); }
       else { showLocalMsg("error", "保存失败，请重试"); }
       setSaving(false);
     };
@@ -700,7 +714,7 @@ export default function AdminPage() {
                   <div className="flex items-center gap-2 ml-4">
                     <a href={`/blog/${post.slug}`} target="_blank" className="px-3 py-1.5 text-xs bg-warm-200 dark:bg-bark-700 text-bark-600 dark:text-bark-200 rounded-full hover:bg-warm-300 transition-colors">查看</a>
                     <button onClick={() => { setEditingPost(post); setActiveTab("edit-post"); }} className="px-3 py-1.5 text-xs bg-warm-200 dark:bg-bark-700 text-bark-600 dark:text-bark-200 rounded-full hover:bg-warm-300 transition-colors">编辑</button>
-                    <button onClick={async () => { if (confirm(`确定删除「${post.title}」吗？`)) { const s = await deleteFile(`content/posts/${post.slug}.md`, `删除文章: ${post.title}`, post.sha); if (s) { showMessage("success", "文章已删除"); loadData(); } else showMessage("error", "删除失败"); } }}
+                    <button onClick={async () => { if (confirm(`确定删除「${post.title}」吗？`)) { const s = await deleteFile(`content/posts/${post.slug}.md`, `删除文章: ${post.title}`, post.sha); if (s) { showMessage("success", "文章已删除，内容已即时更新"); triggerRedeploy(); loadData(); } else showMessage("error", "删除失败"); } }}
                       className="px-3 py-1.5 text-xs bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full hover:bg-red-200 transition-colors">删除</button>
                   </div>
                 </div>
@@ -735,7 +749,7 @@ export default function AdminPage() {
                   <div className="flex items-center gap-2 ml-4">
                     <a href={`/albums/${album.slug}`} target="_blank" className="px-3 py-1.5 text-xs bg-warm-200 dark:bg-bark-700 text-bark-600 dark:text-bark-200 rounded-full hover:bg-warm-300 transition-colors">查看</a>
                     <button onClick={() => { setEditingAlbum(album); setActiveTab("edit-album"); }} className="px-3 py-1.5 text-xs bg-warm-200 dark:bg-bark-700 text-bark-600 dark:text-bark-200 rounded-full hover:bg-warm-300 transition-colors">编辑</button>
-                    <button onClick={async () => { if (confirm(`确定删除「${album.name}」吗？`)) { const s = await deleteFile(`content/albums/${album.slug}.yaml`, `删除相册: ${album.name}`, album.sha); if (s) { showMessage("success", "相册已删除"); loadData(); } else showMessage("error", "删除失败"); } }}
+                    <button onClick={async () => { if (confirm(`确定删除「${album.name}」吗？`)) { const s = await deleteFile(`content/albums/${album.slug}.yaml`, `删除相册: ${album.name}`, album.sha); if (s) { showMessage("success", "相册已删除，内容已即时更新"); triggerRedeploy(); loadData(); } else showMessage("error", "删除失败"); } }}
                       className="px-3 py-1.5 text-xs bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full hover:bg-red-200 transition-colors">删除</button>
                   </div>
                 </div>
@@ -750,10 +764,10 @@ export default function AdminPage() {
       )}
 
       {(activeTab === "new-post" || activeTab === "edit-post") && !loading && (
-        <PostEditor post={activeTab === "edit-post" ? editingPost : null} onSave={() => { setActiveTab("posts"); loadData(); }} onCancel={() => setActiveTab("posts")} />
+        <PostEditor post={activeTab === "edit-post" ? editingPost : null} onSave={() => { setActiveTab("posts"); loadData(); }} onCancel={() => setActiveTab("posts")} onRedeploy={triggerRedeploy} />
       )}
       {(activeTab === "new-album" || activeTab === "edit-album") && !loading && (
-        <AlbumEditor album={activeTab === "edit-album" ? editingAlbum : null} onSave={() => { setActiveTab("albums"); loadData(); }} onCancel={() => setActiveTab("albums")} />
+        <AlbumEditor album={activeTab === "edit-album" ? editingAlbum : null} onSave={() => { setActiveTab("albums"); loadData(); }} onCancel={() => setActiveTab("albums")} onRedeploy={triggerRedeploy} />
       )}
     </div>
   );

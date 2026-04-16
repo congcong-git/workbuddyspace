@@ -1,3 +1,4 @@
+import { getAlbumBySlugFromGitHub, getAllAlbumsFromGitHub } from "@/lib/github-server";
 import { getAlbumBySlug, getAllAlbums } from "@/lib/albums";
 import MasonryGrid from "@/components/album/MasonryGrid";
 import Link from "next/link";
@@ -5,6 +6,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 export const dynamicParams = true;
+export const dynamic = "force-dynamic";
 
 export async function generateStaticParams() {
   const albums = getAllAlbums();
@@ -17,7 +19,7 @@ export async function generateMetadata({
   params: Promise<{ album: string }>;
 }): Promise<Metadata> {
   const { album } = await params;
-  const data = getAlbumBySlug(album);
+  const data = await getAlbumBySlugFromGitHub(album) || getAlbumBySlug(album);
   if (!data) return {};
   return {
     title: data.name,
@@ -31,7 +33,7 @@ export default async function AlbumDetailPage({
   params: Promise<{ album: string }>;
 }) {
   const { album } = await params;
-  const data = getAlbumBySlug(album);
+  const data = await getAlbumBySlugFromGitHub(album) || getAlbumBySlug(album);
 
   if (!data) notFound();
 

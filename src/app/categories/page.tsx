@@ -1,3 +1,4 @@
+import { getAllCategoriesFromGitHub } from "@/lib/github-server";
 import { getAllCategories } from "@/lib/posts";
 import CategoryBadge from "@/components/blog/CategoryBadge";
 import type { Metadata } from "next";
@@ -7,8 +8,15 @@ export const metadata: Metadata = {
   description: "按分类浏览文章",
 };
 
-export default function CategoriesPage() {
-  const categories = getAllCategories();
+export const dynamic = "force-dynamic";
+
+export default async function CategoriesPage() {
+  let categories;
+  try {
+    categories = await getAllCategoriesFromGitHub();
+  } catch {
+    categories = getAllCategories();
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">

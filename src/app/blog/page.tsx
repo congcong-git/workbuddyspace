@@ -1,7 +1,7 @@
-import { getAllPosts } from "@/lib/posts";
+import { getAllPostsFromGitHub } from "@/lib/github-server";
+import { getAllPosts, getAllCategories } from "@/lib/posts";
 import PostList from "@/components/blog/PostList";
 import CategoryBadge from "@/components/blog/CategoryBadge";
-import { getAllCategories } from "@/lib/posts";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,9 +9,28 @@ export const metadata: Metadata = {
   description: "所有文章列表",
 };
 
-export default function BlogPage() {
-  const posts = getAllPosts();
-  const categories = getAllCategories();
+// 每次请求获取最新数据
+export const dynamic = "force-dynamic";
+
+export default async function BlogPage() {
+  // 优先从 GitHub 获取，fallback 到本地
+  let posts;
+  try {
+    posts = await getAllPostsFromGitHub();
+  } catch {
+    posts = getAllPosts();
+  }
+
+  // 分类信息也从 GitHub 数据中提取
+  const categories = posts.length > 0
+    ? (() => {
+        const map = new Map<string, number>();
+        posts.forEach((p) => map.set(p.category, (map.get(p.category) || 0) + 1));
+        return Array.from(map.entries())
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count);
+      })()
+    : getAllCategories();
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">

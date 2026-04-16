@@ -1,9 +1,11 @@
+import { getPostsByCategoryFromGitHub, getAllCategoriesFromGitHub } from "@/lib/github-server";
 import { getPostsByCategory, getAllCategories } from "@/lib/posts";
 import PostList from "@/components/blog/PostList";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 export const dynamicParams = true;
+export const dynamic = "force-dynamic";
 
 export async function generateStaticParams() {
   const categories = getAllCategories();
@@ -28,7 +30,13 @@ export default async function CategoryPage({
 }) {
   const { category } = await params;
   const decodedCategory = decodeURIComponent(category);
-  const posts = getPostsByCategory(decodedCategory);
+
+  let posts;
+  try {
+    posts = await getPostsByCategoryFromGitHub(decodedCategory);
+  } catch {
+    posts = getPostsByCategory(decodedCategory);
+  }
 
   if (posts.length === 0) notFound();
 

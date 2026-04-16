@@ -1,3 +1,4 @@
+import { getPostBySlugFromGitHub, getAllPostsFromGitHub } from "@/lib/github-server";
 import { getPostBySlug, getAllPosts } from "@/lib/posts";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
@@ -9,7 +10,11 @@ import type { Metadata } from "next";
 
 export const dynamicParams = true;
 
+// 动态渲染：每次请求都从 GitHub 获取最新内容
+export const dynamic = "force-dynamic";
+
 export async function generateStaticParams() {
+  // 构建时从本地文件生成静态参数
   const posts = getAllPosts();
   return posts.map((post) => ({ slug: post.slug }));
 }
@@ -20,7 +25,8 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  // 优先从 GitHub 获取
+  const post = await getPostBySlugFromGitHub(slug) || getPostBySlug(slug);
   if (!post) return {};
   return {
     title: post.title,
@@ -34,7 +40,8 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  // 优先从 GitHub 获取最新内容，fallback 到本地文件
+  const post = await getPostBySlugFromGitHub(slug) || getPostBySlug(slug);
 
   if (!post) notFound();
 

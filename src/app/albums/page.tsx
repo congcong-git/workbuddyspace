@@ -1,3 +1,4 @@
+import { getAllAlbumsFromGitHub } from "@/lib/github-server";
 import { getAllAlbums } from "@/lib/albums";
 import AlbumCard from "@/components/album/AlbumCard";
 import type { Metadata } from "next";
@@ -7,8 +8,15 @@ export const metadata: Metadata = {
   description: "用镜头记录生活的美好瞬间",
 };
 
-export default function AlbumsPage() {
-  const albums = getAllAlbums();
+export const dynamic = "force-dynamic";
+
+export default async function AlbumsPage() {
+  let albums;
+  try {
+    albums = await getAllAlbumsFromGitHub();
+  } catch {
+    albums = getAllAlbums();
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">

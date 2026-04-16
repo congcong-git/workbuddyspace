@@ -1,3 +1,4 @@
+import { getAllTagsFromGitHub } from "@/lib/github-server";
 import { getAllTags } from "@/lib/posts";
 import TagCloud from "@/components/blog/TagCloud";
 import type { Metadata } from "next";
@@ -7,8 +8,15 @@ export const metadata: Metadata = {
   description: "按标签浏览文章",
 };
 
-export default function TagsPage() {
-  const tags = getAllTags();
+export const dynamic = "force-dynamic";
+
+export default async function TagsPage() {
+  let tags;
+  try {
+    tags = await getAllTagsFromGitHub();
+  } catch {
+    tags = getAllTags();
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
