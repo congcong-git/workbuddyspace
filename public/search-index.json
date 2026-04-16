@@ -12,35 +12,12 @@
   },
   {
     "slug": "post-20260414",
-    "title": "我愿所有的好，都陪着你",
+    "title": "高效 AI 编程完全指南（2026 年 4 月版）",
     "date": "2026-04-14",
-    "category": "随笔",
-    "tags": [],
-    "summary": "我愿所有的好都陪着你"
-  },
-  {
-    "slug": "build-blog-with-nextjs",
-    "title": "用 Next.js 搭建个人博客",
-    "date": "2026-04-13",
     "category": "技术",
     "tags": [
-      "Next.js",
-      "React",
-      "TypeScript",
-      "Tailwind CSS"
+      "技能学习"
     ],
-    "summary": "从零开始，用 Next.js + Tailwind CSS 搭建一个温暖文艺风格的个人博客，含相册功能。"
-  },
-  {
-    "slug": "photography-tips",
-    "title": "我的摄影心得",
-    "date": "2026-04-11",
-    "category": "摄影",
-    "tags": [
-      "摄影",
-      "心得",
-      "生活"
-    ],
-    "summary": "从手机到相机，记录我对摄影的理解和感悟。"
+    "summary": "本指南整合了 2026 年最前沿的 AI 编程方法论与当月最新工具横评，帮助开发者从“用 AI 写代码”进阶到“与 AI 协同构建软件”。"
   }
 ]
