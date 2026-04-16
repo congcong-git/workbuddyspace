@@ -34,7 +34,7 @@ interface AlbumData {
   sha: string;
 }
 
-type Tab = "posts" | "albums" | "categories" | "new-post" | "edit-post" | "new-album" | "edit-album";
+type Tab = "posts" | "albums" | "categories" | "tags" | "new-post" | "edit-post" | "new-album" | "edit-album";
 
 // ========== 主组件 ==========
 export default function AdminPage() {
@@ -626,7 +626,7 @@ export default function AdminPage() {
       )}
 
       {/* 主 Tab */}
-      {(activeTab === "posts" || activeTab === "albums" || activeTab === "categories") && (
+      {(activeTab === "posts" || activeTab === "albums" || activeTab === "categories" || activeTab === "tags") && (
         <div className="flex items-center gap-3 mb-6">
           <button onClick={() => setActiveTab("posts")} className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === "posts" ? "bg-accent-400 text-white shadow-md" : "bg-warm-200 dark:bg-bark-700 text-bark-600 dark:text-bark-200 hover:bg-warm-300"}`}>
             📝 文章 ({posts.length})
@@ -635,7 +635,10 @@ export default function AdminPage() {
             📷 相册 ({albums.length})
           </button>
           <button onClick={() => setActiveTab("categories")} className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === "categories" ? "bg-accent-400 text-white shadow-md" : "bg-warm-200 dark:bg-bark-700 text-bark-600 dark:text-bark-200 hover:bg-warm-300"}`}>
-            🏷️ 分类标签
+            📂 分类 ({allCategories.length})
+          </button>
+          <button onClick={() => setActiveTab("tags")} className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === "tags" ? "bg-accent-400 text-white shadow-md" : "bg-warm-200 dark:bg-bark-700 text-bark-600 dark:text-bark-200 hover:bg-warm-300"}`}>
+            🏷️ 标签 ({allTags.length})
           </button>
         </div>
       )}
@@ -647,48 +650,234 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ========== 分类标签管理 ========== */}
+      {/* ========== 分类管理 ========== */}
       {activeTab === "categories" && !loading && (
-        <div className="space-y-8">
-          {/* 分类 */}
-          <div>
-            <h2 className="font-serif text-xl font-bold text-bark-700 dark:text-warm-100 mb-4 flex items-center gap-2">
-              📂 分类 <span className="text-sm font-normal text-bark-400">({allCategories.length})</span>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="font-serif text-xl font-bold text-bark-700 dark:text-warm-100 flex items-center gap-2">
+              📂 分类管理 <span className="text-sm font-normal text-bark-400">({allCategories.length})</span>
             </h2>
-            {allCategories.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {allCategories.map((cat) => (
-                  <div key={cat.name} className="p-4 bg-white dark:bg-bark-800 rounded-warm-lg border border-warm-200 dark:border-bark-700 hover:border-accent-300 dark:hover:border-accent-500 transition-all cursor-pointer"
-                    onClick={() => { setEditingPost(null); setActiveTab("posts"); }}>
-                    <div className="font-serif font-bold text-bark-700 dark:text-warm-100">{cat.name}</div>
-                    <div className="text-xs text-bark-400 mt-1">{cat.count} 篇文章</div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-bark-400 dark:text-bark-300">暂无分类，发布文章时创建</p>
-            )}
-            <p className="text-xs text-bark-400 mt-3">💡 分类在发布文章时创建和选择，点击分类可跳转到文章列表</p>
           </div>
 
-          {/* 标签 */}
-          <div>
-            <h2 className="font-serif text-xl font-bold text-bark-700 dark:text-warm-100 mb-4 flex items-center gap-2">
-              🏷️ 标签 <span className="text-sm font-normal text-bark-400">({allTags.length})</span>
+          {allCategories.length > 0 ? (
+            <div className="space-y-3">
+              {allCategories.map((cat) => {
+                const catPosts = posts.filter((p) => p.category === cat.name);
+                return (
+                  <div key={cat.name} className="flex items-center justify-between p-4 bg-white dark:bg-bark-800 rounded-warm-lg border border-warm-200 dark:border-bark-700 hover:border-accent-300 dark:hover:border-accent-500 transition-all">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-serif font-bold text-bark-700 dark:text-warm-100 text-lg">{cat.name}</div>
+                      <div className="text-xs text-bark-400 mt-1">{cat.count} 篇文章</div>
+                      {catPosts.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {catPosts.slice(0, 3).map((p) => (
+                            <span key={p.slug} className="text-xs px-2 py-0.5 bg-warm-100 dark:bg-bark-700 text-bark-500 dark:text-bark-300 rounded">
+                              {p.title}
+                            </span>
+                          ))}
+                          {catPosts.length > 3 && <span className="text-xs text-bark-400">等 {catPosts.length} 篇</span>}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      <button
+                        onClick={async () => {
+                          const newName = prompt("请输入新的分类名称：", cat.name);
+                          if (!newName || newName === cat.name) return;
+                          // 批量更新所有该分类的文章
+                          let successCount = 0;
+                          for (const post of catPosts) {
+                            const frontmatter = {
+                              title: post.title,
+                              date: post.date,
+                              category: newName,
+                              tags: post.tags,
+                              summary: post.summary,
+                              cover: post.cover,
+                            };
+                            const fileContent = matter.stringify(post.content, frontmatter);
+                            const s = await saveFile(`content/posts/${post.slug}.md`, fileContent, `重命名分类: ${cat.name} → ${newName}`, post.sha);
+                            if (s) successCount++;
+                          }
+                          if (successCount > 0) {
+                            showMessage("success", `已将 ${successCount} 篇文章的分类从「${cat.name}」改为「${newName}」`);
+                            triggerRedeploy();
+                            loadData();
+                          } else {
+                            showMessage("error", "重命名失败，请重试");
+                          }
+                        }}
+                        className="px-3 py-1.5 text-xs bg-warm-200 dark:bg-bark-700 text-bark-600 dark:text-bark-200 rounded-full hover:bg-warm-300 transition-colors"
+                      >
+                        编辑
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`确定删除分类「${cat.name}」吗？\n该操作会将 ${cat.count} 篇文章的分类改为「未分类」`)) return;
+                          let successCount = 0;
+                          for (const post of catPosts) {
+                            const frontmatter = {
+                              title: post.title,
+                              date: post.date,
+                              category: "未分类",
+                              tags: post.tags,
+                              summary: post.summary,
+                              cover: post.cover,
+                            };
+                            const fileContent = matter.stringify(post.content, frontmatter);
+                            const s = await saveFile(`content/posts/${post.slug}.md`, fileContent, `删除分类: ${cat.name}`, post.sha);
+                            if (s) successCount++;
+                          }
+                          if (successCount > 0) {
+                            showMessage("success", `已删除分类「${cat.name}」，${successCount} 篇文章已改为「未分类」`);
+                            triggerRedeploy();
+                            loadData();
+                          } else {
+                            showMessage("error", "删除失败，请重试");
+                          }
+                        }}
+                        className="px-3 py-1.5 text-xs bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full hover:bg-red-200 transition-colors"
+                      >
+                        删除
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-white dark:bg-bark-800 rounded-warm-lg border border-warm-200 dark:border-bark-700">
+              <span className="text-4xl block mb-3">📂</span>
+              <p className="text-bark-400 dark:text-bark-300">暂无分类，发布文章时创建</p>
+            </div>
+          )}
+          <p className="text-xs text-bark-400">💡 分类在发布文章时创建和选择。编辑分类名会批量更新所有相关文章；删除分类会将文章改为「未分类」</p>
+        </div>
+      )}
+
+      {/* ========== 标签管理 ========== */}
+      {activeTab === "tags" && !loading && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="font-serif text-xl font-bold text-bark-700 dark:text-warm-100 flex items-center gap-2">
+              🏷️ 标签管理 <span className="text-sm font-normal text-bark-400">({allTags.length})</span>
             </h2>
-            {allTags.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {allTags.map((tag) => (
-                  <span key={tag.name} className="px-4 py-2 bg-warm-200 dark:bg-bark-700 text-bark-600 dark:text-bark-200 rounded-full text-sm font-medium hover:bg-accent-100 dark:hover:bg-accent-700/30 hover:text-accent-500 transition-colors">
-                    #{tag.name} <span className="text-xs opacity-60">({tag.count})</span>
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-bark-400 dark:text-bark-300">暂无标签，发布文章时创建</p>
-            )}
-            <p className="text-xs text-bark-400 mt-3">💡 标签在发布文章时创建和选择，可多选</p>
+            <button
+              onClick={async () => {
+                const name = prompt("请输入新标签名称：");
+                if (!name || !name.trim()) return;
+                const trimmed = name.trim();
+                if (allTags.some((t) => t.name === trimmed)) {
+                  showMessage("error", `标签「${trimmed}」已存在`);
+                  return;
+                }
+                // 新标签只需在前端可用即可，发布文章时选择就会自动保存
+                showMessage("success", `标签「${trimmed}」已创建，发布文章时即可选择`);
+              }}
+              className="px-5 py-2.5 bg-accent-400 text-white rounded-full font-medium hover:bg-accent-500 transition-colors shadow-md text-sm"
+            >
+              + 新建标签
+            </button>
           </div>
+
+          {allTags.length > 0 ? (
+            <div className="space-y-3">
+              {allTags.map((tag) => {
+                const tagPosts = posts.filter((p) => p.tags.includes(tag.name));
+                return (
+                  <div key={tag.name} className="flex items-center justify-between p-4 bg-white dark:bg-bark-800 rounded-warm-lg border border-warm-200 dark:border-bark-700 hover:border-accent-300 dark:hover:border-accent-500 transition-all">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-serif font-bold text-bark-700 dark:text-warm-100 text-lg">#{tag.name}</span>
+                        <span className="text-xs px-2 py-0.5 bg-accent-100 dark:bg-accent-700/30 text-accent-500 dark:text-accent-300 rounded-full">{tag.count} 篇</span>
+                      </div>
+                      {tagPosts.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {tagPosts.slice(0, 3).map((p) => (
+                            <span key={p.slug} className="text-xs px-2 py-0.5 bg-warm-100 dark:bg-bark-700 text-bark-500 dark:text-bark-300 rounded">
+                              {p.title}
+                            </span>
+                          ))}
+                          {tagPosts.length > 3 && <span className="text-xs text-bark-400">等 {tagPosts.length} 篇</span>}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      <button
+                        onClick={async () => {
+                          const newName = prompt("请输入新的标签名称：", tag.name);
+                          if (!newName || newName === tag.name || !newName.trim()) return;
+                          const trimmed = newName.trim();
+                          // 批量更新所有包含该标签的文章
+                          let successCount = 0;
+                          for (const post of tagPosts) {
+                            const newTags = post.tags.map((t) => (t === tag.name ? trimmed : t));
+                            const frontmatter = {
+                              title: post.title,
+                              date: post.date,
+                              category: post.category,
+                              tags: newTags,
+                              summary: post.summary,
+                              cover: post.cover,
+                            };
+                            const fileContent = matter.stringify(post.content, frontmatter);
+                            const s = await saveFile(`content/posts/${post.slug}.md`, fileContent, `重命名标签: ${tag.name} → ${trimmed}`, post.sha);
+                            if (s) successCount++;
+                          }
+                          if (successCount > 0) {
+                            showMessage("success", `已将 ${successCount} 篇文章的标签从「${tag.name}」改为「${trimmed}」`);
+                            triggerRedeploy();
+                            loadData();
+                          } else {
+                            showMessage("error", "重命名失败，请重试");
+                          }
+                        }}
+                        className="px-3 py-1.5 text-xs bg-warm-200 dark:bg-bark-700 text-bark-600 dark:text-bark-200 rounded-full hover:bg-warm-300 transition-colors"
+                      >
+                        编辑
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`确定删除标签「${tag.name}」吗？\n该操作会从 ${tag.count} 篇文章中移除此标签`)) return;
+                          let successCount = 0;
+                          for (const post of tagPosts) {
+                            const newTags = post.tags.filter((t) => t !== tag.name);
+                            const frontmatter = {
+                              title: post.title,
+                              date: post.date,
+                              category: post.category,
+                              tags: newTags,
+                              summary: post.summary,
+                              cover: post.cover,
+                            };
+                            const fileContent = matter.stringify(post.content, frontmatter);
+                            const s = await saveFile(`content/posts/${post.slug}.md`, fileContent, `删除标签: ${tag.name}`, post.sha);
+                            if (s) successCount++;
+                          }
+                          if (successCount > 0) {
+                            showMessage("success", `已删除标签「${tag.name}」，从 ${successCount} 篇文章中移除`);
+                            triggerRedeploy();
+                            loadData();
+                          } else {
+                            showMessage("error", "删除失败，请重试");
+                          }
+                        }}
+                        className="px-3 py-1.5 text-xs bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full hover:bg-red-200 transition-colors"
+                      >
+                        删除
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-white dark:bg-bark-800 rounded-warm-lg border border-warm-200 dark:border-bark-700">
+              <span className="text-4xl block mb-3">🏷️</span>
+              <p className="text-bark-400 dark:text-bark-300">暂无标签，发布文章时创建或点击右上角新建</p>
+            </div>
+          )}
+          <p className="text-xs text-bark-400">💡 标签在发布文章时创建和选择。编辑标签名会批量更新所有相关文章；删除标签会从所有文章中移除该标签</p>
         </div>
       )}
 
